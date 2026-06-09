@@ -14,8 +14,9 @@ celery
 celerybeat-schedule
 dhenv/
 .env
+.env.*
 debug.log
 *.pyc
-
+anotacoes_data.json
 
 

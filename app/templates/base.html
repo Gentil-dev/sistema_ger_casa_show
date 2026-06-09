@@ -162,7 +162,12 @@
             background-color: #5aa89a;             
         }
 
-        .table-artistas th, 
+            .table-artistas th {
+                background-color: #2C3E50; !important;
+                color: black !important;
+                font-weight: bold;
+        }   
+             
         .table-artistas td {
             background-color: #5aa89a;             
         }
@@ -259,32 +264,43 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/intlTelInput.min.js"></script>
 
     <script>
-        document.addEventListener("DOMContentLoaded", function() {
+        document.addEventListener("DOMContentLoaded", function () {
             var input = document.querySelector("#id_telefone");
+            if (!input) return; // evita erro em páginas sem o campo
+
             var iti = window.intlTelInput(input, {
-                initialCountry: "br",
+                initialCountry: "auto",
+                geoIpLookup: function (cb) { cb("br"); },
                 preferredCountries: ["br", "us", "au", "gb"],
-                separateDialCode: false,
-                nationalMode: false,
-                formatOnDisplay: false,   
-                autoPlaceholder: "off",   
+                separateDialCode: true,
+                nationalMode: true,
+                formatOnDisplay: false,
+                autoPlaceholder: "off",
                 utilsScript: "https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/utils.js"
             });
-    
-            // ✅ Remove espaços enquanto o usuário digita
-            input.addEventListener("input", function() {
-                let numeroCorrigido = input.value.replace(/\D/g, "");  // Remove espaços e caracteres não numéricos
-                input.value = numeroCorrigido;
+
+            var lockedIso2 = iti.getSelectedCountryData().iso2;
+            input.addEventListener("countrychange", function () {
+                lockedIso2 = iti.getSelectedCountryData().iso2;
             });
-    
-            // ✅ Garante que o número seja salvo corretamente antes do envio do formulário
-            input.form.addEventListener("submit", function() {
-                let numeroCorrigido = iti.getNumber().replace(/\D/g, "");  
-                console.log("Número salvo no banco:", numeroCorrigido);   
-                input.value = numeroCorrigido;
+
+            input.addEventListener("input", function () {
+                var digits = input.value.replace(/\D/g, "");
+                if (digits !== input.value) input.value = digits;
+                if (iti.getSelectedCountryData().iso2 !== lockedIso2) {
+                iti.setCountry(lockedIso2);
+                }
             });
+
+            var form = input.form || input.closest("form");
+            if (form) {
+                form.addEventListener("submit", function () {
+                input.value = iti.getNumber(); // salva em E.164 (+código+DDD+número)
+                });
+            }
         });
     </script>
+    
 </body>
 </html>
  

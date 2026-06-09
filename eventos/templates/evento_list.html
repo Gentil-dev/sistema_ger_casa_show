@@ -7,13 +7,12 @@
                 <h1 class="mb-0">Lista de Eventos</h1>
             </div>
             <div class="card-body">
-                <table class="table table-hover table-bordered table-custom">
-                    <thead class="thead-light">
+                <table class="table table-hover table-bordered table-custom eventos-table">
+                    <thead class="thead-musgo">
                         <tr>
                             <th>Artista</th>
                             <th>Data</th>
                             <th>Data Agendada</th>
-                            <th>Horário</th>
                             <th>Descrição</th>
                             <th>Ações</th>
                         </tr>
@@ -23,8 +22,7 @@
                             <tr>
                                 <td>{{ evento.artista.nome }}</td>
                                 <td>{{ evento.data }}</td>
-                                <td>{{ evento.scheduled_date }}</td> 
-                                <td>{{ evento.horario }}</td>
+                                <td>{{ evento.scheduled_date }}</td>
                                 <td>{{ evento.descricao }}</td>
                                 <td>
                                     {% if user.is_authenticated %}

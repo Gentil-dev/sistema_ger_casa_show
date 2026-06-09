@@ -5,14 +5,16 @@ import os  #modulo python p interagir c o sistema.
 from pathlib import Path
 from site import USER_BASE
 from decouple import config
+from dotenv import load_dotenv
 import dj_database_url
  
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
+# Conf p/ carregar os arquivos em desenv e produção
+env_name = os.getenv("ENV", "development")
+dotenv_path = BASE_DIR / f".env.{env_name}"
+load_dotenv(dotenv_path)
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = config('DJANGO_SECRET_KEY')
@@ -31,7 +33,8 @@ DATABASES = {
     'default':dj_database_url.config(
         default=config('DATABASE_URL'),
         conn_max_age=600,
-        ssl_require=True
+        ssl_require=env_name == "production"
+
     )
 }
 
@@ -186,3 +189,11 @@ LOGGING = {
         },         
     },
 }
+
+#sistema de envio de senha, para validar email de registro user.
+EMAIL_BACKEND = config('EMAIL_BACKEND')
+EMAIL_HOST = config('EMAIL_HOST')
+EMAIL_PORT = config('EMAIL_PORT', cast=int)
+EMAIL_USE_TLS = config('EMAIL_USE_TLS', cast=bool)
+EMAIL_HOST_USER = config('EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD')

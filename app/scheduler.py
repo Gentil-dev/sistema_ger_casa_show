@@ -1,6 +1,6 @@
 from apscheduler.schedulers.background import BackgroundScheduler
 from pytz import timezone
-from apscheduler.triggers.interval import IntervalTrigger
+from apscheduler.triggers.cron import CronTrigger
 import logging
 
 
@@ -39,17 +39,12 @@ def start_scheduler():
     existing_jobs = {job.id for job in scheduler.get_jobs()}
 
     if 'enviar_mensagens_agendadas' not in existing_jobs:
-        scheduler.add_job(enviar_mensagens_agendadas, 'interval', minutes=1,
+        scheduler.add_job(enviar_mensagens_agendadas, CronTrigger(hour=12 , minute=38),
                             id='enviar_mensagens_agendadas', replace_existing=True)
 
     if 'verificar_status' not in existing_jobs:
-        scheduler.add_job(verificar_status, 'interval', minutes=2,
+        scheduler.add_job(verificar_status, CronTrigger(hour=6, minute=10),  
                             id='verificar_status', replace_existing=True)
 
 
-def scheduler_daily_message(artista_id):
-    # define uma task diária p enviar msg.
-    # trigger = CronTrigger(hour=9, minute=0)
-    trigger = IntervalTrigger(minutes=1)
-    scheduler.add_job(enviar_mensagens_agendadas, trigger, args=[artista_id],
-                      id=f"send_message_{artista_id}", replace_existing=True)
+ 

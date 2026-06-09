@@ -21,10 +21,10 @@ class ArtistaForm(forms.ModelForm):
             'email': forms.EmailInput(attrs={'class': 'form-control'}),            
         }
 class MessageForm(forms.ModelForm):
-    send_date = forms.DateTimeField(
-        input_formats=['%Y-%m-%dT%H:%M:'],
-        widget=forms.DateTimeInput(attrs={'type': 'datetime-local', 'class': 'form-control'}),
-        initial=now
+    send_date = forms.DateField(
+        input_formats=['%Y-%m-%d'],
+        widget=forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+        initial=now()
     )
     class Meta:
         model = Message

@@ -9,30 +9,19 @@
                     <h4>Registre-se!</h4>
                 </div>
                 <div class="card-body">
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-success">{{ message }}</div>
+                        {% endfor %}
+                    {% endif %}
                     <form method="post">
                         {% csrf_token %}
                         
                         <div class="form-group">
-                            <label for="{{ user_form.username.id_for_label }}" class="font-weight-bold">Usuário:</label>
-                            {{ user_form.username|safe }}
+                            <label for="{{ user_form.user_form.email.id_for_label }}" class="font-weight-bold">E-mail:</label>
+                            {{ user_form.email }}
                             <div class="text-danger">
-                                {{ user_form.username.errors }}
-                            </div>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="{{ user_form.password1.id_for_label }}" class="font-weight-bold">Senha:</label>
-                            {{ user_form.password1|safe }}
-                            <div class="text-danger">
-                                {{ user_form.password1.errors }}
-                            </div>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="{{ user_form.password2.id_for_label }}" class="font-weight-bold">Confirmação de Senha:</label>
-                            {{ user_form.password2|safe }}
-                            <div class="text-danger">
-                                {{ user_form.password2.errors }}
+                                {{ user_form.email.errors }}
                             </div>
                         </div>
 
@@ -40,6 +29,7 @@
                             <input type="submit" class="btn btn-success btn-block" value="Cadastrar">
                         </div>
                     </form>
+
                     <p class="text-center mt-3">Já tem uma conta? <a href="{% url 'login' %}">Login</a></p>
                 </div>
             </div>

@@ -28,10 +28,7 @@
                         {{ form.scheduled_date }}
                     </div>
 
-                    <div class="form-group">
-                        <label for="{{ form.horario.id_for_label }}">Horário:</label>
-                        {{ form.horario }}
-                    </div>
+                     
 
                     <div class="form-group">
                         <label for="{{ form.descricao.id_for_label }}">Descrição:</label>
@@ -39,7 +36,7 @@
                     </div>
 
                     <button type="submit" class="btn btn-primary">Salvar</button>
-                    <a href="{% url 'home' %}" class="btn btn-secondary">Voltar</a>
+                    <a href="{% url 'evento_list' %}" class="btn btn-secondary">Voltar</a>
                 </form>
             </div>
         </div>

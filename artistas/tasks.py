@@ -31,16 +31,17 @@ def enviar_mensagem_whatsgw(apikey, remetente, destinatario, mensagem_id, tipo_m
         "message_type": tipo_mensagem,
         "message_body": corpo_mensagem,
     }
+ 
     response = requests.post(API_URL, data=parametros)
     response.raise_for_status()
     return response.json()
 
  # Função para enviar mensagens agendadas
 def enviar_mensagens_agendadas():
-    agora = timezone.now()
+    agora = timezone.localdate()
     mensagens_pendentes = Message.objects.filter(
         artista__isnull=False,
-        send_date__lte=timezone.now(), 
+        send_date__lte=timezone.localdate(), 
         sent=False
     )
 
@@ -74,10 +75,10 @@ def enviar_mensagens_agendadas():
 
 def monitorar_mensagens():
     messages = Message.objects.filter(sent=False)
-    agora = timezone.now()
+    agora = timezone.localdate()
 
     for message in messages:
-        if message.send_date <= timezone.now() and not message.sent:
+        if message.send_date <= timezone.localdate() and not message.sent:
             try:
                 enviar_mensagens_agendadas()
 
@@ -105,12 +106,7 @@ def verificar_status():
 
 def iniciar_scheduler():
  
-    is_testing = os.environ.get("PYTEST_CURRENT_TEST", None) is not None
-
-    # Adiciona os jobs com intervalos ajustados para testes ou produção
-    scheduler.add_job(enviar_mensagens_agendadas, 'interval', minutes=1 if is_testing else 5)
-    scheduler.add_job(verificar_status, 'interval', minutes=1 if is_testing else 10)
-
-    # Inicia o scheduler
-    scheduler.start()
-    logger.info("APScheduler iniciado para tarefas de mensagens e verificação de status.")
+    # Apenas inicia o scheduler se não estiver rodando (sem agendar novas tarefas aqui)
+    if not scheduler.running:
+        scheduler.start()
+        logger.info("Scheduler iniciado via iniciar_scheduler (sem reconfiguração de jobs).")

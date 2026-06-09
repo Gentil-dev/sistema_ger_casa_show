@@ -31,13 +31,13 @@ def evento(artista):
 @pytest.mark.django_db
 def test_cria_evento_com_sucesso(artista):
     """Testa se um evento é criado corretamente no banco de dados sem interferência do scheduler."""
-    
+    now = timezone.localdate()
     evento = Evento.objects.create(
         artista=artista,
-        data=timezone.now().date(),
+        data=now,
         horario=timezone.now().time(),
         descricao="Teste de trabalho agendado",
-        scheduled_date=timezone.now(),        
+        scheduled_date=now,        
     )
 
     # Verifica se o evento foi salvo no banco corretamente

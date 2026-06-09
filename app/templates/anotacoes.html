@@ -2,88 +2,89 @@
 
 {% block content %}
 <div class="container mt-5">
-    <h2 class="text-center">Anotações</h2>
-    <div class="d-flex justify-content-between">
-        <!-- Editor 1 -->
-        <div style="width: 48%; margin-top: 20px;">
-            <div id="toolbar1"></div> <!-- Barra de ferramentas do Editor 1 -->
-            <div id="editor1" style="height: 600px; border: 6px solid #ccc;"></div>
-            <button class="btn btn-success mt-2" onclick="saveContent('editor1Content', quill1)">Salvar</button>
-            <button class="btn btn-danger mt-2" onclick="clearContent('editor1Content', quill1)">Remove</button>
-        </div>                     
-        
-        <!-- Editor 2 -->
-        <div style="width: 48%; margin-top: 20px;">
-            <div id="toolbar2"></div> <!-- Barra de ferramentas do Editor 2 -->
-            <div id="editor2" style="height: 600px; border: 6px solid #ccc;"></div>
-            <button class="btn btn-success mt-2" onclick="saveContent('editor2Content', quill2)">Salvar</button>
-            <button class="btn btn-danger mt-2" onclick="clearContent('editor2Content', quill2)">Remove</button>
-        </div>
-    </div>   
+  <h2 class="text-center">Anotações</h2>
+  <div class="d-flex justify-content-center">
+    <div class="editor-wrapper" style="width: 100%;">
+      <div class="toolbar" id="toolbar1"></div>
+      <div class="editor" id="editor1" style="height: 600px; border: 2px solid #ccc;"></div>
+      <div class="d-flex justify-content-between mt-2"> 
+        <button class="btn btn-danger px-1 py-2" onclick="removerSelecao()">Remover seleção</button>
+        <button class="btn btn-primary px-6 py-2" onclick="salvarAnotacoes()">Salvar</button>
+      </div>
+  </div>
+  <div class="text-center mt-3">
+  </div>
 </div>
 
 <script>
-    var quill1, quill2;
+  let editor;
 
-    document.addEventListener('DOMContentLoaded', function() {
-        quill1 = new Quill('#editor1', {
-            theme: 'snow',
-            modules: {
-                toolbar: [
-                    ['bold', 'italic', 'underline', 'strike'],  
-                    ['link', 'image'],                         
-                    [{ 'size': ['small', false, 'large', 'huge'] }], 
-                    [{ 'color': [] }, { 'background': [] }],   
-                    [{ 'align': [] }],                         
-                    ['clean']                                  
-                ]
-            }
-        });
-
-        quill2 = new Quill('#editor2', {
-            theme: 'snow',
-            modules: {
-                toolbar: [
-                    ['bold', 'italic', 'underline', 'strike'],
-                    ['link', 'image'],
-                    [{ 'size': ['small', false, 'large', 'huge'] }],
-                    [{ 'color': [] }, { 'background': [] }],
-                    [{ 'align': [] }],
-                    ['clean']
-                ]
-            }
-        });
-
-        // Recuperar conteúdo salvo do Local Storage ao carregar a página
-        loadContent('editor1Content', quill1);
-        loadContent('editor2Content', quill2);
+  document.addEventListener('DOMContentLoaded', function () {
+    editor = new Quill('#editor1', {
+      theme: 'snow',
+      modules: {
+        toolbar: [
+          ['bold', 'italic', 'underline', 'strike'],
+          ['link', 'image'],
+          [{ 'size': ['small', false, 'large', 'huge'] }],
+          [{ 'color': [] }, { 'background': [] }],
+          [{ 'align': [] }],
+          ['clean']
+        ]
+      }
     });
 
-    function saveContent(storageKey, quillInstance) {
-        localStorage.setItem(storageKey, quillInstance.root.innerHTML);
-        alert('Conteúdo salvo!');
+    fetch('/api/anotacoes/')
+      .then(response => response.json())
+      .then(data => {
+        if (data.editor1) editor.root.innerHTML = data.editor1;
+      });
+  });
+
+  function salvarAnotacoes() {
+    const html = editor.root.innerHTML;
+ 
+    fetch('/api/anotacoes/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': getCookie('csrftoken')
+      },
+      body: JSON.stringify({ editor1: html })
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.message) {
+        alert(data.message);
+      } else if (data.error) {
+        alert("Erro: " + data.error);
+      }
+    })
+    .catch(() => alert('Erro ao salvar anotações.'));
+  }
+
+  function removerSelecao() {
+    const selection = editor.getSelection();
+    if (selection && selection.length > 0) {
+      editor.deleteText(selection.index, selection.length);
+    } else {
+      alert("Selecione um trecho para remover.");
     }
+  }
 
-    function clearContent(storageKey, quillInstance) {
-        var selection = quillInstance.getSelection(); // Obtém a seleção do usuário
-
-        if (selection && selection.length > 0) {
-            // Se houver seleção, remove apenas o conteúdo selecionado
-            quillInstance.deleteText(selection.index, selection.length);
-        } else {
-            // Se nada estiver selecionado, remove tudo  
-             quillInstance.root.innerHTML = "";
+  function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+      const cookies = document.cookie.split(';');
+      for (let cookie of cookies) {
+        cookie = cookie.trim();
+        if (cookie.substring(0, name.length + 1) === (name + '=')) {
+          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+          break;
         }
-        // Atualiza o Local Storage com o novo conteúdo do editor
-        localStorage.setItem(storageKey, quillInstance.root.innerHTML);
+      }
     }
-
-
-    function loadContent(storageKey, quillInstance) {
-        var savedContent = localStorage.getItem(storageKey);
-        if (savedContent) {
-            quillInstance.root.innerHTML = savedContent;
-        }
-    }
+    return cookieValue;
+  }
 </script>
 {% endblock %}

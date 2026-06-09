@@ -2,12 +2,13 @@ import logging
 from django.db import models
 from django.utils import timezone
 from django.core.exceptions import ValidationError
-import re 
+import re
 from validate_docbr import CPF
+from datetime import datetime, time
 
- 
- 
+
 logger = logging.getLogger('artistas')
+
 
 class Artista(models.Model):
     nome = models.CharField(max_length=100)
@@ -26,16 +27,16 @@ class Artista(models.Model):
     chave_pix = models.CharField(max_length=100)
     email = models.EmailField(max_length=254, unique=True, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
-    
+
     def validar_cpf(self):
         cpf_validator = CPF()
         if not cpf_validator.validate(self.cpf):
             raise ValidationError("CPF inválido.")
-    
+
     def validar_email(self):
         if self.email and not re.match(r'^[\w\.-]+@[\w\.-]+\.\w+$', self.email):
             raise ValidationError("E-mail inválido.")
-        
+
     def validar_chave_pix(self):
         if self.chave_pix:
             if self.tipo_chave_pix == 'cel':
@@ -64,85 +65,87 @@ class Artista(models.Model):
     """
     Verificar se o artista tem informações incompletas ou inativas.
     """
+
     def deve_ser_atualizado(self):
         if self.tipo_chave_pix == 'email':
             campos_obrigatorios = [self.telefone, self.chave_pix]
         else:
             campos_obrigatorios = [self.telefone]
-            
+
         return any(campo is None or campo == '' for campo in campos_obrigatorios)
     """
     Atualiza o status do artista.
-    """ 
+    """
+
     def atualizar_status(self):
         if self.deve_ser_atualizado():
             logger.info(f"Artista {self.id} com informações incompletas.")
             self.save()
-         
+
 
 class Message(models.Model):
     artista = models.ForeignKey(Artista, on_delete=models.CASCADE)
     conteudo = models.TextField()
-    scheduled_date = models.DateTimeField(auto_now_add=True, verbose_name="Data Agendada")
-    send_date = models.DateTimeField(default=timezone.now, verbose_name="Data de Envio")
+    scheduled_date = models.DateField(auto_now_add=True, verbose_name="Data Agendada")
+    send_date = models.DateField(default=timezone.localdate, verbose_name="Data de Envio")
     sent = models.BooleanField(default=False, verbose_name="Enviada")
-    
-         
+
     def save(self, *args, **kwargs):
         self.full_clean()  # Chama o método clean() para validação
         super().save(*args, **kwargs)
-   
+
     def __str__(self):
         return f"Mensagem para {self.artista.nome} agendada para {self.send_date}"
-    #A mensagem deve ser enviada se a data de envio é menor ou igual ao horário atual
-    #e ainda não foi marcada como enviada.
-    
+    # A mensagem deve ser enviada se a data de envio é menor ou igual ao horário atual
+    # e ainda não foi marcada como enviada.
+
     def deve_enviar(self):
-        return self.send_date <= timezone.now() and not self.sent
-    
-    #lógica de envio das msg.
+        return self.send_date <= timezone.localdate() and not self.sent
+
+    # lógica de envio das msg.
     def enviar(self):
         if self.sent:
-            return  #impede o reenvio        
+            return  # impede o reenvio
         try:
-            #Simula o envio da msg
-            self.sent = True   #atualiza o status p envio
-            self.save()   #persiste a alteração no Bd
-            
+            #destinatario = self.artista.telefone or self.artista.email or "destinatário indefinido"
+            #logger.info(f">>> Enviando mensagem ID {self.id} para {destinatario}")  # ✅ ADICIONE ISSO
+        
+            #self.sent = True
+            #self.save()
+            #logger.info(f"Mensagem ID {self.id} enviada com sucesso para o artista {self.artista.nome}.")
+
+        #except Exception as e:
+            #logger.error(f"Erro ao enviar mensagem ID {self.id}: {e}")
+            #raise e
+            # Simula o envio da msg
+            self.sent = True  # atualiza o status p envio
+            self.save()  # persiste a alteração no Bd
+
             logger.info(f"Mensagem ID {self.id} enviada com sucesso para o artista {self.artista.nome}.")
-             
+
         except Exception as e:
             logger.error(f"Erro ao enviar mensagem ID {self.id}: {e}")
-            raise e #propaga a exceção p depuração
-         
-            
+            raise e  # propaga a exceção p depuração
+
     def deve_ser_atualizado(self):
-    # Verifica se a mensagem não foi enviada e se a data de envio passou.
-        return not self.sent and self.send_date < timezone.now() 
-       
+        # Verifica se a mensagem não foi enviada e se a data de envio passou.
+        return not self.sent and self.send_date < timezone.localdate()
+
     def atualizar_status(self):
-        # Verifica se a msg ainda não foi env e já passou da hora de envio
-        agora = timezone.now()
-        if not self.sent and self.send_date < timezone.now():
-            # Verifica se o envio foi tentado recentemente
-            ultima_tentativa_envio = timezone.now() - timezone.timedelta(minutes=1)   
-            mensagens_recem_enviadas = Message.objects.filter(
-                id=self.id, send_date__gte=ultima_tentativa_envio)
-            
-            if not mensagens_recem_enviadas.exists():
-                logger.warning(f"Mensagem {self.id} está atrasada.")                    
-                self.sent = False  #Assegura q mensagem permanece ñ enviada.
-                self.save()
-                    
-                       
+        if not self.sent and self.send_date < timezone.localdate():
+            logger.warning(f"Mensagem {self.id} está atrasada.")
+            self.sent = False  # Garante que permanece como não enviada
+            self.save()
+
     @property
     def status(self):
-        #retorna o status atual da msg
+        # retorna o status atual da msg
         if self.sent:
             return "Enviada"
-        if not self.sent and self.send_date < timezone.now():
+        if not self.sent and self.send_date < timezone.localdate():
             return "Atrasada"
         return "Pendente"
+
     class Meta:
         verbose_name = "Message"
         verbose_name_plural = "Messages"

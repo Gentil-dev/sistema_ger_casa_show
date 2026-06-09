@@ -1,7 +1,11 @@
+from urllib import response
 from django.test import TestCase
 from django.urls import reverse
 from django.contrib.auth.models import User
+from django.contrib.auth.forms import UserCreationForm
+from django.core import mail
 from accounts.forms import CustomUserCreationForm
+
 
 class RegisterViewTest(TestCase):
     def test_register_view_get(self):
@@ -10,16 +14,21 @@ class RegisterViewTest(TestCase):
         self.assertTemplateUsed(response, 'register.html')
         self.assertIn('user_form', response.context)
 
-    def test_register_view_post_valid(self):
-        response = self.client.post(reverse('register'), {
-            'username': 'newuser',
-            'password1': 'testpassword123',
-            'password2': 'testpassword123'
-        })
-        self.assertEqual(response.status_code, 302)  # Redireciona após registro bem-sucedido
-        self.assertRedirects(response, reverse('login'))
-        self.assertTrue(User.objects.filter(username='newuser').exists())
-
+    def test_register_view_post_valid_envia_email_e_cria_usuario(self):
+        form_data = {
+            'email': 'usuario@teste.com'
+        }
+        response = self.client.post(reverse('register'), data=form_data)
+        
+        #verifica redireção(registro bem-sucedido)
+        self.assertEqual(response.status_code, 302)
+        #verifica se user foi criado no bd
+        self.assertTrue(User.objects.filter(email='usuario@teste.com').exists())
+        #verifica se email foi enviado
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertIn('Sua senha é:', mail.outbox[0].body)
+         
+         
     def test_register_view_post_invalid(self):
         response = self.client.post(reverse('register'), {
             'username': 'newuser',
@@ -66,7 +75,7 @@ class LogoutViewTest(TestCase):
         self.client.login(username='testuser', password='testpassword123')
         response = self.client.get(reverse('logout'))
         self.assertEqual(response.status_code, 302)  # Redireciona após logout
-        self.assertRedirects(response, reverse('evento_list'))
+        self.assertRedirects(response, reverse('home'))
 
 class CustomUserCreationFormTest(TestCase):
     def test_form_valido(self):

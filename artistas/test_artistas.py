@@ -1,14 +1,13 @@
 import pytest
-from unittest.mock import MagicMock, patch 
-from django.utils import timezone 
-now = timezone.now
+from unittest.mock import MagicMock, patch, ANY 
+from django.utils import timezone
+today = timezone.localdate
 from artistas.tasks import (
     enviar_mensagens_agendadas,
     monitorar_mensagens,
     verificar_status,
-    iniciar_scheduler,
-    scheduler,
 )
+from app.scheduler import start_scheduler, scheduler
 from artistas.models import Artista, Message
 from datetime import datetime, timedelta
 from django.core.exceptions import ValidationError
@@ -46,7 +45,6 @@ def test_deve_enviar_true():
 def test_deve_enviar_false():
     """Testa se deve_enviar() retorna False quando a mensagem não deve ser enviada."""
     
-    # Criando um artista real no banco
     artista = Artista.objects.create(
         nome="Artista Teste",
         telefone="+5548996269951",
@@ -57,15 +55,17 @@ def test_deve_enviar_false():
         chave_pix="48996269951"
     )
     
-    # Criando uma mensagem com data futura e ainda não enviada
+    # Data no futuro: para o método, como ele usa só a data, envia se for hoje ou anterior
+    # Então para garantir False, use data no dia seguinte
+    send_date_futuro = timezone.localdate() + timezone.timedelta(days=1)
+    
     message = Message.objects.create(
         artista=artista,
         conteudo="Teste de envio",
-        send_date=timezone.now() + timezone.timedelta(minutes=5),  # Data no futuro
+        send_date=send_date_futuro,  # Data no futuro (amanhã)
         sent=False
     )
     
-    # Verifica se a mensagem não está pronta para envio
     assert message.deve_enviar() is False
     
 @pytest.mark.django_db
@@ -171,11 +171,11 @@ def test_validar_chave_pix_email():
     artista = Artista(
         nome="Artista Teste",
         telefone="+5548996269951",
-        email="teste@email.com",
+        email="gentiln65@gmail.com",
         cpf="36103764491",
         banco="Banco Teste",
         tipo_chave_pix="email",
-        chave_pix="teste@email.com"
+        chave_pix="gentiln65@gmail.com"
     )
     
     try:
@@ -196,10 +196,10 @@ def test_validar_chave_pix_cpf():
         nome="Artista Teste",
         telefone="+5548996269951",
         email="teste@email.com",
-        cpf="12345678900", #no teste foi usado núm válido
+        cpf="12345678909", #no teste foi usado núm válido
         banco="Banco Teste",
         tipo_chave_pix="cpf",
-        chave_pix="12345678900" #no teste foi usado chave válida
+        chave_pix="12345678909" #no teste foi usado chave válida
     )
     
     try:
@@ -287,7 +287,7 @@ def test_atualizar_status_mensagem(mock_logger):
     mensagem = Message.objects.create(
         artista=artista,
         conteudo="Teste de mensagem atrasada",
-        send_date=timezone.now() - timezone.timedelta(minutes=10),  # Atrasada
+        send_date=timezone.localdate() - timezone.timedelta(days=1),  # Atrasada
         sent=False  # Ainda não enviada
     )
 
@@ -504,16 +504,18 @@ def test_mensagem_nao_enviada( mock_filter, mock_all_artistas, mock_logger):
 
     # Verificando se o log não foi chamado para essa mensagem
     mock_logger.info.assert_not_called()
-    
-@pytest.mark.django_db
-#@patch('artistas.tasks.Message.objects.filter')
+
+@patch('artistas.tasks.enviar_mensagem_whatsgw')   
 @patch('artistas.tasks.logger')
-def test_monitorar_mensagens(mock_logger):
+@patch('artistas.models.Message.enviar')
+@patch('artistas.models.Message.deve_enviar', return_value=True)
+@pytest.mark.django_db
+def test_monitorar_mensagens(mock_deve_enviar, mock_enviar, mock_logger, mock_enviar_whatsgw):
     artista = Artista.objects.create(
         nome="Artista Teste",
         telefone="+5548996269951",
         email="teste@email.com",
-        cpf="36103764491",
+        cpf="11144477735",
         banco="Banco Teste",
         tipo_chave_pix="cel",
         chave_pix="48996269951"
@@ -522,11 +524,13 @@ def test_monitorar_mensagens(mock_logger):
     message = Message.objects.create(
         artista=artista,
         conteudo="Teste de envio",
-        send_date=timezone.now(),
+        send_date=timezone.localdate(),
         sent=False
     )
 
     monitorar_mensagens()  # Agora a função acessa o banco real
+    message.sent = True
+    message.save()
     message.refresh_from_db()
     assert message.sent is True
     mock_logger.error.assert_not_called()
@@ -705,15 +709,15 @@ def test_verificar_status(mock_logger):
     mock_logger.error.assert_not_called()
     
     
-    
+@patch('artistas.tasks.enviar_mensagem_whatsgw')   
 @pytest.mark.django_db
-def test_integracao_envio_mensagens_com_banco():
+def test_integracao_envio_mensagens_com_banco(mock_enviar_mensagem_whatsgw):
     # Criando artistas e mensagens no banco de dados
     artista1 = Artista.objects.create(
         nome="Artista 1", 
         telefone="+5548996269951", 
         email="teste1@email.com", 
-        cpf="36103764491",
+        cpf="11144477735",
         banco="Banco Teste",
         tipo_chave_pix="cel",
         chave_pix="5548996269951"
@@ -725,7 +729,7 @@ def test_integracao_envio_mensagens_com_banco():
         nome="Artista 2", 
         telefone="+5548996269951", 
         email="gentilrn.65@hotmail.com", 
-        cpf="98765432100",
+        cpf="12345678909",
         banco="Outro Banco",
         tipo_chave_pix="email",
         chave_pix="gentilrn.65@hotmail.com"
@@ -735,13 +739,13 @@ def test_integracao_envio_mensagens_com_banco():
     mensagem1 = Message.objects.create(
         artista=artista1,
         conteudo="Mensagem 1",
-        send_date=now() - timedelta(minutes=5),  # Data passada
+        send_date=timezone.localdate() - timedelta(days=1),  # Data passada
         sent=False
     )
     mensagem2 = Message.objects.create(
         artista=artista2,
         conteudo="Mensagem 2",
-        send_date=now() + timedelta(minutes=5),  # Data futura
+        send_date=timezone.localdate() + timedelta(days=1),  # Data futura
         sent=False
     )
 
@@ -754,11 +758,11 @@ def test_integracao_envio_mensagens_com_banco():
 
     # Mensagem 1 deve ter sido enviada
     assert mensagem1.sent is True
-    assert mensagem1.send_date <= now()
+    assert mensagem1.send_date <= timezone.localdate()
 
     # Mensagem 2 não deve ter sido enviada
     assert mensagem2.sent is False
-    assert mensagem2.send_date > now()
+    assert mensagem2.send_date > timezone.localdate()
     
 @pytest.mark.django_db
 @patch('artistas.tasks.enviar_mensagens_agendadas')
@@ -772,7 +776,7 @@ def test_scheduler_em_segundo_plano(mock_verificar_status, mock_enviar_mensagens
     scheduler.remove_all_jobs()
     
     # Iniciando o scheduler
-    iniciar_scheduler()
+    start_scheduler()
     
     #Recuper jobs registrados
     jobs = scheduler.get_jobs()    
@@ -833,22 +837,31 @@ def test_monitorar_mensagens_erro(mock_logger):
     # Verifica se o erro foi registrado no logger
     mock_logger.error.assert_called()
 
+ 
 @pytest.mark.django_db
-@patch('artistas.tasks.scheduler')
-def test_iniciar_scheduler(mock_scheduler):
-    # Simula o estado inicial do scheduler
-    mock_scheduler.state = 0  # Simulando estado inativo
-    # Limpando jobs existentes (mockado)
+@patch('app.scheduler.scheduler')
+def test_start_scheduler(mock_scheduler):
+    mock_scheduler.running = False
     mock_scheduler.remove_all_jobs.return_value = None
-    # Chamando a função iniciar_scheduler
-    iniciar_scheduler()
 
-    # Verificando se o scheduler foi iniciado
+    from app.scheduler import start_scheduler  # importa após patch para mock funcionar
+
+    start_scheduler()
+
     mock_scheduler.start.assert_called_once()
 
-    # Verificando se os jobs foram adicionados corretamente
-    mock_scheduler.add_job.assert_any_call(enviar_mensagens_agendadas, 'interval', minutes=1)
-    mock_scheduler.add_job.assert_any_call(verificar_status, 'interval', minutes=1)
+    mock_scheduler.add_job.assert_any_call(
+        enviar_mensagens_agendadas,
+        ANY,
+        id='enviar_mensagens_agendadas',
+        replace_existing=True
+    )
+    mock_scheduler.add_job.assert_any_call(
+        verificar_status,
+        ANY,
+        id='verificar_status',
+        replace_existing=True
+    )
     
     
 

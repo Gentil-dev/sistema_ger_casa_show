@@ -9,16 +9,15 @@ class Evento(models.Model):
 
     artista = models.ForeignKey(Artista, on_delete=models.CASCADE)
     data = models.DateField(auto_now_add=True)
-    horario = models.TimeField()
     descricao = models.TextField(null=True, blank=True)
-    scheduled_date = models.DateField(null=True, blank=True)
+    scheduled_date = models.DateTimeField(null=True, blank=True)
  
     class Meta:
         ordering = ['data']
 
 
     def __str__(self):
-        return f"{self.artista.nome} - {self.formatted_data()} {self.formatted_horario()}"
+        return f"{self.artista.nome} - {self.formatted_data()}"
 
     def formatted_data(self):
         return self.data.strftime('%d-%m-%Y')

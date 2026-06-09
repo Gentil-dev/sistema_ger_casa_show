@@ -8,7 +8,9 @@ from eventos.models import Evento
 from rest_framework import permissions
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
-from .views import anotacoes_view
+from . import views
+from accounts.views import password_reset_view
+from django.utils import timezone
  
 #Documentação da API
 schema_view = get_schema_view(
@@ -32,7 +34,7 @@ class HomeView(TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['eventos_proximos'] = Evento.objects.filter(
-            data__gte=datetime.now()).order_by('data')
+            data__gte=timezone.localdate()).order_by('data')
         context['show_proximos_eventos'] = True
         return context
 
@@ -50,5 +52,7 @@ urlpatterns = [
     path('eventos/', include('eventos.urls')),
     path('artistas/', include('artistas.urls')),
     path('', HomeView.as_view(), name='home'),
-    path('anotacoes/', anotacoes_view, name='anotacoes'),
+    path('anotacoes/', views.pagina_anotacoes, name='anotacoes'),
+    path('api/anotacoes/', views.dados_anotacoes, name='dados_anotacoes'),  # Endpoint JSON
+    path('redefinir-senha/', password_reset_view, name='password_reset'),
 ]

@@ -46,11 +46,7 @@ class EventoCreateView(CreateView):
         return self.render_to_response(self.get_context_data(form=form))
 
 
-'''
-class EventoDetailView(DetailView):
-    model = models.Evento
-    template_name = 'evento_detail.html'
-'''
+ 
 
 
 @method_decorator(login_required(login_url='login'), name='dispatch')
