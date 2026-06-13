@@ -36,11 +36,11 @@
                     <div class="form-group">
                         <label>Data Criação:</label>
                         <p>{{ artista.created_at|date:"d/m/Y H:i" }}</p>
-                    <div class="text-center">
-                        <a href="{% url 'artista_update' artista.id %}" class="btn btn-warning">Editar</a>
-                        <a href="{% url 'artistas_list' %}" class="btn btn-secondary">Voltar para Lista</a>
-                        <a href="{% url 'artista_delete' artista.id %}" class="btn btn-danger" onclick="return confirm('Tem certeza de que deseja excluir este artista?');">Excluir</a>
                     </div>
+                    <div class="text-center">
+                        <a href="{% url 'artista_update' artista.id %}" class="btn btn-sm btn-warning">Editar</a>
+                        <a href="{% url 'artistas_list' %}" class="btn btn-sm btn-secondary">Voltar para Lista</a>
+                        <a href="{% url 'artista_delete' artista.id %}" class="btn btn-sm btn-danger" onclick="return confirm('Tem certeza de que deseja excluir este artista?');">Excluir</a>        
                     </div>
                 </div>
             </div>
