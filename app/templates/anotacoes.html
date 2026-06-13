@@ -7,7 +7,7 @@
     <div class="editor-wrapper" style="width: 100%;">
       <div class="toolbar" id="toolbar1"></div>
       <div class="editor" id="editor1" style="height: 600px; border: 2px solid #ccc;"></div>
-      <div class="d-flex justify-content-between mt-2"> 
+      <div class="d-flex justify-content-between mt-2">
         <button class="btn btn-danger px-1 py-2" onclick="removerSelecao()">Remover seleção</button>
         <button class="btn btn-primary px-6 py-2" onclick="salvarAnotacoes()">Salvar</button>
       </div>
@@ -43,7 +43,7 @@
 
   function salvarAnotacoes() {
     const html = editor.root.innerHTML;
- 
+
     fetch('/api/anotacoes/', {
       method: 'POST',
       headers: {

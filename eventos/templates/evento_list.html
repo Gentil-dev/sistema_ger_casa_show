@@ -7,41 +7,94 @@
                 <h1 class="mb-0">Lista de Eventos</h1>
             </div>
             <div class="card-body">
-                <table class="table table-hover table-bordered table-custom eventos-table">
-                    <thead class="thead-musgo">
-                        <tr>
-                            <th>Artista</th>
-                            <th>Data</th>
-                            <th>Data Agendada</th>
-                            <th>Descrição</th>
-                            <th>Ações</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for evento in eventos %}
+                <div class="table-responsive d-none d-md-block">
+                    <table class="table table-hover table-bordered table-custom eventos-table">
+                        <thead class="thead-musgo">
                             <tr>
-                                <td>{{ evento.artista.nome }}</td>
-                                <td>{{ evento.data }}</td>
-                                <td>{{ evento.scheduled_date }}</td>
-                                <td>{{ evento.descricao }}</td>
-                                <td>
-                                    {% if user.is_authenticated %}
-                                    <div class="btn-group" role="group">
-                                        <a href="{% url 'evento_update' evento.id %}" class="btn btn-warning btn-sm">Editar</a>
-                                        <a href="{% url 'evento_delete' evento.id %}" class="btn btn-danger btn-sm">Excluir</a>
+                                <th>Artista</th>
+                                <th>Data</th>
+                                <th>Data Agendada</th>
+                                <th>Hora</th>
+                                <th>Descrição</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for evento in eventos %}
+                                <tr>
+                                    <td>{{ evento.artista.nome }}</td>
+                                    <td>{{ evento.data }}</td>
+                                    <td>{{ evento.scheduled_date|date:"d/m/Y" }}</td>
+                                    <td>{{ evento.scheduled_date|time:"H:i" }}</td>
+                                    <td>{{ evento.descricao }}</td>
+                                    <td>
+                                        {% if user.is_authenticated %}
+                                        <div class="btn-group" role="group">
+                                            <a href="{% url 'evento_update' evento.id %}" class="btn btn-warning btn-sm">Editar</a>
+                                            <a href="{% url 'evento_delete' evento.id %}" class="btn btn-danger btn-sm">Excluir</a>
+                                        </div>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% empty %}
+                                <tr>
+                                    <td colspan="6" class="text-center">Nenhum evento encontrado.</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                <div class="d-md-none">
+                    {% for evento in eventos %}
+                        <div class="card mb-3">
+                            <div class="card-body">
+                                <h5 class="card-title">
+                                    {{ evento.artista.nome }}
+                                </h5>
+
+                                <p class="mb-2">
+                                    <strong>Data:</strong>
+                                    {{ evento.data }}
+                                </p>
+
+                                <p class="mb-2">
+                                    <strong>Data agendada:</strong>
+                                    {{ evento.scheduled_date|date:"d/m/Y" }}
+                                </p>
+
+                                <p class="mb-2">
+                                    <strong>Hora:</strong>
+                                    {{ evento.scheduled_date|time:"H:i" }}
+                                </p>
+
+                                <p class="mb-3">
+                                    <strong>Descrição:</strong>
+                                    {{ evento.descricao|default:"Sem descrição" }}
+                                </p>
+
+                                {% if user.is_authenticated %}
+                                    <div class="d-flex">
+                                        <a href="{% url 'evento_update' evento.id %}"
+                                        class="btn btn-warning btn-sm mr-2">
+                                            Editar
+                                        </a>
+
+                                        <a href="{% url 'evento_delete' evento.id %}"
+                                        class="btn btn-danger btn-sm">
+                                            Excluir
+                                        </a>
                                     </div>
-                                    {% endif %}
-                                </td>
-                            </tr>
-                        {% empty %}
-                            <tr>
-                                <td colspan="5" class="text-center">Nenhum evento encontrado.</td>
-                            </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+                                {% endif %}
+                            </div>
+                        </div>
+                    {% empty %}
+                        <p class="text-center mb-0">
+                            Nenhum evento encontrado.
+                        </p>
+                    {% endfor %}
+                </div>
                 {% if user.is_authenticated %}
-                <a href="{% url 'evento_create' %}" class="btn btn-primary mt-3">Adicionar Novo Evento</a>
+                    <a href="{% url 'evento_create' %}" class="btn btn-primary mt-3">Adicionar Novo Evento</a>
                 {% endif %}
             </div>
         </div>

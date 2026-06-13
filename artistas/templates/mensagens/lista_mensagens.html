@@ -1,49 +1,109 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="container mt-5" style="background-color: #6ACFC9;">
-    <div class="row mb-4">
-        <div class="col-md-12">
-            <h2 class="mb-4">Lista de Mensagens</h2>
-            
-            
-            <table class="table table-bordered table-striped">
-                <thead class="thead-dark">
-                    <tr>
-                        <th>Artista</th>
-                        <th>Conteúdo</th>
-                        <th>Data Agendada</th>
-                        <th>Data de Envio</th>
-                        <th>Enviada</th>
-                        <th>Ações</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for mensagem in mensagens %}
+<div class="mt-5 p-3" style="background-color: #6ACFC9;">
+    <h2 class="mb-4">Lista de Mensagens</h2>
+
+    <div class="d-none d-md-block table-responsive">
+        <table class="table table-bordered table-striped">
+            <thead class="thead-dark">
+                <tr>
+                    <th>Artista</th>
+                    <th>Conteúdo</th>
+                    <th>Data Agendada</th>
+                    <th>Data de Envio</th>
+                    <th>Enviada</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for mensagem in mensagens %}
                     <tr>
                         <td>{{ mensagem.artista.nome }}</td>
                         <td>{{ mensagem.conteudo }}</td>
                         <td>{{ mensagem.scheduled_date }}</td>
-                        <td>{{ mensagem.send_date }}</td>                      
+                        <td>{{ mensagem.send_date }}</td>
                         <td>{{ mensagem.sent|yesno:"Sim,Não" }}</td>
                         <td>
                             <div class="btn-group" role="group">
-                            <a href="{% url 'editar_mensagem' mensagem.id %}" class="btn btn-warning btn-sm">Editar</a>
-                            <a href="{% url 'deletar_mensagem' mensagem.id %}" class="btn btn-danger btn-sm">Deletar</a>   
+                                <a href="{% url 'editar_mensagem' mensagem.id %}" class="btn btn-warning btn-sm">
+                                    Editar
+                                </a>
+
+                                <a href="{% url 'deletar_mensagem' mensagem.id %}" class="btn btn-danger btn-sm">
+                                    Deletar
+                                </a>
                             </div>
                         </td>
                     </tr>
-                    {% empty %}
+                {% empty %}
                     <tr>
-                        <td colspan="5" class="text-center">Nenhuma mensagem encontrada para "<span class="artist-name">{{ artista.nome }}</span>". 
+                        <td colspan="6" class="text-center">
+                            Nenhuma mensagem encontrada para
+                            "<span class="artist-name">{{ artista.nome }}</span>".
                         </td>
                     </tr>
-                    {% endfor %}
-                </tbody>
-            </table>           
-            <a href="{% url 'criar_mensagem' artista.id %}" class="btn btn-primary mb-1">Criar Nova Mensagem</a>
-            <a href="{% url 'artistas_list' %}" class="btn btn-secondary mb-1">Voltar para lista</a> 
-        </div>
+                {% endfor %}
+            </tbody>
+        </table>
     </div>
+
+    <div class="d-md-none">
+        {% for mensagem in mensagens %}
+            <div class="card mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">
+                        {{ mensagem.artista.nome }}
+                    </h5>
+
+                    <p class="mb-2">
+                        <strong>Conteúdo:</strong>
+                        {{ mensagem.conteudo }}
+                    </p>
+
+                    <p class="mb-2">
+                        <strong>Data Agendada:</strong>
+                        {{ mensagem.scheduled_date }}
+                    </p>
+
+                    <p class="mb-2">
+                        <strong>Data de Envio:</strong>
+                        {{ mensagem.send_date }}
+                    </p>
+
+                    <p class="mb-3">
+                        <strong>Enviada:</strong>
+                        {{ mensagem.sent|yesno:"Sim,Não" }}
+                    </p>
+
+                    <div class="d-flex">
+                        <a href="{% url 'editar_mensagem' mensagem.id %}"
+                           class="btn btn-warning btn-sm flex-fill mr-2">
+                            Editar
+                        </a>
+
+                        <a href="{% url 'deletar_mensagem' mensagem.id %}"
+                           class="btn btn-danger btn-sm flex-fill">
+                            Deletar
+                        </a>
+                    </div>
+                </div>
+            </div>
+        {% empty %}
+            <p class="text-center mb-3">
+                Nenhuma mensagem encontrada para
+                <span class="artist-name">{{ artista.nome }}</span>.
+            </p>
+        {% endfor %}
+    </div>
+
+    <a href="{% url 'criar_mensagem' artista.id %}" class="btn btn-primary mb-1">
+        Criar Nova Mensagem
+    </a>
+
+    <a href="{% url 'artistas_list' %}" class="btn btn-secondary mb-1">
+        Voltar para lista
+    </a>
 </div>
 {% endblock %}

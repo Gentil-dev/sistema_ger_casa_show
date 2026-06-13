@@ -1,14 +1,14 @@
 {% extends 'base.html' %}
 
 {% block content %}
-    <div class="container">
+    <div class="mt-4">
         {% if messages %}
             <div>
                 {% for message in messages %}
                     <div class="alert alert-{{ message.tags }} mt-3">
                         {{ message }}
                     </div>
-                {% endfor %}       
+                {% endfor %}
             </div>
         {% endif%}
 
@@ -28,15 +28,20 @@
                         {{ form.scheduled_date }}
                     </div>
 
-                     
+                    <div class="form-group">
+                        <label for="{{ form.horario.id_for_label }}">Hora:</label>
+                        {{ form.horario }}
+                    </div>
 
                     <div class="form-group">
                         <label for="{{ form.descricao.id_for_label }}">Descrição:</label>
                         {{ form.descricao }}
                     </div>
 
-                    <button type="submit" class="btn btn-primary">Salvar</button>
-                    <a href="{% url 'evento_list' %}" class="btn btn-secondary">Voltar</a>
+                    <div class="d-flex">
+                        <button type="submit" class="btn btn-primary flex-fill mr-2">Salvar</button>
+                        <a href="{% url 'evento_list' %}" class="btn btn-secondary flex-fill">Voltar</a>
+                    </div>
                 </form>
             </div>
         </div>

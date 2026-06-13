@@ -9,13 +9,17 @@
                     <h4>Agendar Nova Mensagem</h4>
                 </div>
                 <div class="card-body">
+                    <p class="mb-4">
+                        <strong>Artista:</strong>
+                        {{ artista.nome }}
+                    </p>
                     {% if messages %}
                         <div>
                             {% for message in messages %}
                                 <div class="alert alert-{{ message.tags }} mt-3">
                                     {{ message }}
                                 </div>
-                            {% endfor %}       
+                            {% endfor %}
                         </div>
                     {% endif %}
                     <form method="post">
@@ -29,7 +33,7 @@
                         </div>
                         <div class="form-group">
                             <label for="{{ form.send_date.id_for_label }}">Data de Envio: diariamente às 06hs</label>
-                            <input type="date" id="{{ form.send_date.id_for_label }}" name="{{ form.send_date.html_name }}" 
+                            <input type="date" id="{{ form.send_date.id_for_label }}" name="{{ form.send_date.html_name }}"
                                 class="form-control" value="{{ form.send_date.value }}">
                             <div class="text-danger">
                                 {{ form.send_date.errors }}

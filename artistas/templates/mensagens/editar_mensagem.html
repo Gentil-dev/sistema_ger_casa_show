@@ -7,7 +7,7 @@
             <h2>Editar Mensagem</h2>
             <form method="post">
                 {% csrf_token %}
-                
+
                 <div class="form-group">
                     <label for="{{ form.conteudo.id_for_label }}">Conteúdo:</label>
                     {{ form.conteudo }}
@@ -18,7 +18,7 @@
 
                 <div class="form-group">
                     <label for="{{ form.send_date.id_for_label }}">Data de Envio:</label>
-                    <input type="datetime-local" id="{{ form.send_date.id_for_label }}" name="{{ form.send_date.html_name }}" 
+                    <input type="datetime-local" id="{{ form.send_date.id_for_label }}" name="{{ form.send_date.html_name }}"
                         class="form-control" min="1000-01-01T00:00" max="9999-12-31T23:59" value="{{ form.send_date.value }}">
                     <div class="text-danger">
                         {{ form.send_date.errors }}
